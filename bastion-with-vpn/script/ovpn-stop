@@ -1,0 +1,5 @@
+#!/bin/bash 
+
+# ssh -t -i ssh/insecure-deployer "ubuntu@$(terraform output nat.ip)" sudo docker stop gosuri/openvpn
+
+echo "NOT IMPLEMENTED"

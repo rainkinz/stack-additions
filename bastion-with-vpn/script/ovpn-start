@@ -1,0 +1,22 @@
+#!/bin/bash
+
+src_dir="$(dirname "$0")"
+"$src_dir/common.sh"
+
+echo "Initializing the OpenVPN PKI"
+
+VERBOSE=true
+
+private_key_path=$(val bastion.private_key_path)
+debug "Private key $private_key_path"
+
+bastion_user=$(val bastion.user)
+debug "Bastion user: $bastion_user"
+
+bastion_dns=$(val bastion.public_dns)
+debug "DNS: $bastion_dns"
+
+echo "Starting the server"
+
+ssh -t -i $private_key_path "$bastion_user@$bastion_dns" sudo docker run --volumes-from ovpn-data -d -p 1194:1194/udp --cap-add=NET_ADMIN gosuri/openvpn
+#ssh -t -i $(terraform output bastion.private_key_path) "$(terraform output nat.user)@$(terraform output nat.ip)" sudo docker run --volumes-from ovpn-data -d -p 1194:1194/udp --cap-add=NET_ADMIN gosuri/openvpn

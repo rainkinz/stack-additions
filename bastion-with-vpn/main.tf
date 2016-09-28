@@ -24,6 +24,9 @@
  *
  */
 
+variable "name" {
+}
+
 variable "instance_type" {
   default     = "t2.micro"
   description = "Instance type, see a list at: https://aws.amazon.com/ec2/instance-types/"
@@ -60,6 +63,10 @@ variable "environment" {
   description = "Environment tag, e.g prod"
 }
 
+variable "nat_user" {
+  default = "ec2-user"
+}
+
 
 /* module "ami" { */
 /*   source        = "github.com/terraform-community-modules/tf_aws_ubuntu_ami/ebs" */
@@ -77,6 +84,51 @@ variable "nat-amis" {
   }
 }
 
+/* Security group for the VPN/NAT server */
+resource "aws_security_group" "vpn" {
+  name        = "${format("%s-%s-external-vpn", var.name, var.environment)}"
+  description = "Security group for VPN/NAT instances that allows SSH and VPN traffic from the internet. Allows output HTTP[S]"
+  vpc_id = "${var.vpc_id}"
+
+  ingress {
+    from_port = 22
+    to_port = 22
+    protocol = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port = 1194
+    to_port = 1194
+    protocol = "udp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+
+  // Might need to open and expose these
+  /* ingress { */
+  /*   from_port = 443 */
+  /*   to_port = 443 */
+  /*   protocol = "tcp" */
+  /*   cidr_blocks = ["0.0.0.0/0"] */
+  /* } */
+
+  /* egress { */
+  /*   from_port = 443 */
+  /*   to_port = 443 */
+  /*   protocol = "tcp" */
+  /*   cidr_blocks = ["0.0.0.0/0"] */
+  /* } */
+
+  lifecycle {
+    create_before_destroy = true
+  }
+
+  tags {
+    Name        = "${format("%s external vpn/ssh", var.name)}"
+    Environment = "${var.environment}"
+  }
+}
 
 resource "aws_instance" "bastion" {
   ami                    = "${lookup(var.nat-amis, var.region)}"
@@ -85,7 +137,7 @@ resource "aws_instance" "bastion" {
 
   subnet_id              = "${var.public_subnet_id}"
   key_name               = "${var.key_name}"
-  vpc_security_group_ids = ["${split(",",var.security_groups)}"]
+  vpc_security_group_ids = ["${split(",", var.security_groups)}", "${aws_security_group.vpn.id}"]
   monitoring             = true
 
   // Example of how we might deploy some userdata
@@ -100,7 +152,7 @@ resource "aws_instance" "bastion" {
 
   connection {
     // Note the user is EC2 user
-    user = "ec2-user"
+    user = "${var.nat_user}"
     key_file = "${var.private_key_path}"
   }
 
@@ -130,4 +182,21 @@ resource "aws_eip" "bastion" {
 // Bastion external IP address.
 output "external_ip" {
   value = "${aws_eip.bastion.public_ip}"
+}
+
+/* // The following are used in the scripts */
+/* output "bastion.ip" { */
+/*   value = "${aws_instance.bastion.public_ip}" */
+/* } */
+
+output "public_dns" {
+  value = "${aws_instance.bastion.public_dns}"
+}
+
+output "user" {
+  value = "${var.nat_user}"
+}
+
+output "private_key_path" {
+  value = "${var.private_key_path}"
 }

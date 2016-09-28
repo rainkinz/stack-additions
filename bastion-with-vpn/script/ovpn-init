@@ -1,0 +1,20 @@
+#!/bin/bash
+
+src_dir="$(dirname "$0")"
+"$src_dir/common.sh"
+
+VERBOSE=true
+
+private_key_path=$(val bastion.private_key_path)
+debug "Private key $private_key_path"
+
+bastion_user=$(val bastion.user)
+debug "Bastion user: $bastion_user"
+
+bastion_dns=$(val bastion.public_dns)
+debug "DNS: $bastion_dns"
+
+echo "Initializing the OpenVPN PKI"
+
+# ssh -t -i $private_key_path "$bastion_user@$bastion_dns" sudo docker run --volumes-from ovpn-data --rm -it gosuri/openvpn ovpn_initpki
+

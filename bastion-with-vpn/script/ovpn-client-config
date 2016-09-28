@@ -1,0 +1,27 @@
+#!/bin/bash
+
+src_dir="$(dirname "$0")"
+"$src_dir/common.sh"
+
+# ssh -t -i $(terraform output bastion.private_key_path) "$(terraform output nat.user)@$(terraform output nat.ip)" sudo docker run --volumes-from ovpn-data --rm gosuri/openvpn ovpn_getclient "${1}" > "${1}.ovpn"
+
+
+VERBOSE=true
+
+private_key_path=$(val bastion.private_key_path)
+debug "Private key $private_key_path"
+
+bastion_user=$(val bastion.user)
+debug "Bastion user: $bastion_user"
+
+bastion_dns=$(val bastion.public_dns)
+debug "DNS: $bastion_dns"
+
+user=$1
+if [ "$user" == "" ]; then
+  echo "User is required"
+  exit 1
+fi
+
+ssh -t -i $private_key_path "$bastion_user@$bastion_dns" sudo docker run --volumes-from ovpn-data --rm gosuri/openvpn ovpn_getclient "${user}" > "${user}.ovpn"
+
