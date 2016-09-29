@@ -153,7 +153,8 @@ resource "aws_instance" "bastion" {
   connection {
     // Note the user is EC2 user
     user = "${var.nat_user}"
-    key_file = "${var.private_key_path}"
+    #key_file = "${var.private_key_path}"
+    private_key = "${file(var.private_key_path)}"
   }
 
   provisioner "remote-exec" {
