@@ -6,17 +6,12 @@
  *    module "ecr" {
  *      source            = "github.com/rainkinz/stack-additions/ecr"
  *      name              = "mycustomnginx"
- *      environment       = "prod"
  *    }
  *
  */
 
 variable "name" {
   description = "the name of your stack, e.g. \"wb-dev\""
-}
-
-variable "environment" {
-  description = "the name of your environment, e.g. \"prod-east\""
 }
 
 resource "aws_ecr_repository" "repo" {

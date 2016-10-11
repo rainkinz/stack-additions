@@ -27,6 +27,11 @@
 variable "name" {
 }
 
+variable "ami_id" {
+  default = ""
+  description = "AMI ID of any custom built NAT instance to use instead of AWS default"
+}
+
 variable "instance_type" {
   default     = "t2.micro"
   description = "Instance type, see a list at: https://aws.amazon.com/ec2/instance-types/"
@@ -131,7 +136,7 @@ resource "aws_security_group" "vpn" {
 }
 
 resource "aws_instance" "bastion" {
-  ami                    = "${lookup(var.nat-amis, var.region)}"
+  ami                    = "${coalesce(var.ami_id, lookup(var.nat-amis, var.region))}"
   source_dest_check      = false
   instance_type          = "${var.instance_type}"
 
